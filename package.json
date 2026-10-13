@@ -10,15 +10,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@expo/vector-icons": "^14.0.4",
+    "@expo/vector-icons": "~14.0.4",
     "expo": "~52.0.0",
     "expo-document-picker": "~13.0.3",
     "expo-file-system": "~18.0.4",
     "expo-sharing": "~13.0.0",
-    "expo-sqlite": "~15.0.6",
+    "expo-sqlite": "~15.1.4",
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
-    "react-native": "0.76.5",
+    "react-native": "0.76.9",
     "expo-asset": "~11.0.5",
     "jalaali-js": "^1.2.8",
     "react-native-svg": "15.8.0"
