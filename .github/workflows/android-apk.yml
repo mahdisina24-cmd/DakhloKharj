@@ -22,9 +22,15 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
       - name: Align Expo package versions
-        run: npx expo install --fix
+        run: |
+          for attempt in 1 2 3; do
+            npx expo install --fix && exit 0
+            echo "Expo dependency alignment failed (attempt $attempt/3); retrying in 15 seconds..."
+            sleep 15
+          done
+          exit 1
       - name: Verify Expo dependency tree
         run: npx expo-doctor
       - name: Generate native Android project
