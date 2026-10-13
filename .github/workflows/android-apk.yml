@@ -8,71 +8,81 @@ on:
       - 'app.json'
       - 'assets/icon.svg'
       - 'package.json'
+      - 'package-lock.json'
       - 'tsconfig.json'
       - '.github/workflows/android-apk.yml'
 
+permissions:
+  contents: read
+
 jobs:
   build:
-    name: Build installable APK
+    name: Build APK (single sequential job)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - name: Checkout
+      - name: 1. Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Node.js
+
+      - name: 2. Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
-      - name: Align Expo package versions
+
+      - name: 3. Set up Java for Android
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 4. Install dependencies
         run: |
-          for attempt in 1 2 3; do
-            npx expo install --fix && exit 0
-            echo "Expo dependency alignment failed (attempt $attempt/3); retrying in 15 seconds..."
-            sleep 15
-          done
-          exit 1
-      - name: Verify Expo dependency tree
-        run: npx expo-doctor
-      - name: Generate PNG app icon from SVG
+          set -euxo pipefail
+          npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
+
+      - name: 5. Generate PNG app icon
         run: |
+          set -euxo pipefail
           python - <<'PY'
           import struct, zlib
-          # Generate a simple, valid 1024x1024 RGB PNG icon without external image tools.
           w = h = 1024
           rows = []
           for y in range(h):
               row = bytearray([0])
               for x in range(w):
-                  # teal background with a simple white wallet/card motif
-                  edge = min(x, y, w-1-x, h-1-y)
                   if 220 < x < 805 and 300 < y < 720:
-                      if 520 < x < 845 and 445 < y < 610:
-                          c = (15, 118, 110)
-                      else:
-                          c = (240, 253, 250)
+                      c = (15, 118, 110) if (520 < x < 845 and 445 < y < 610) else (240, 253, 250)
                   elif 90 < x < 290 and 620 < y < 820 and (x-190)**2 + (y-720)**2 < 100**2:
                       c = (245, 158, 11)
                   else:
-                      c = (15, 118, 110) if edge > 20 else (6, 78, 74)
+                      c = (15, 118, 110)
                   row.extend(c)
               rows.append(bytes(row))
-          def chunk(t, d):
-              return struct.pack('!I', len(d)) + t + d + struct.pack('!I', zlib.crc32(t+d) & 0xffffffff)
-          png = bytes([137,80,78,71,13,10,26,10]) + chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b'')
-          open('assets/icon.png', 'wb').write(png)
+          def chunk(kind, data):
+              return struct.pack('!I', len(data)) + kind + data + struct.pack('!I', zlib.crc32(kind + data) & 0xffffffff)
+          png = bytes([137, 80, 78, 71, 13, 10, 26, 10])
+          png += chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0))
+          png += chunk(b'IDAT', zlib.compress(b''.join(rows), 6))
+          png += chunk(b'IEND', b'')
+          with open('assets/icon.png', 'wb') as f:
+              f.write(png)
+          print('Created assets/icon.png')
           PY
-      - name: Generate native Android project
-        run: npx expo prebuild --platform android --non-interactive
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Build APK
+          file assets/icon.png
+
+      - name: 6. Generate Android project
+        run: |
+          set -euxo pipefail
+          npx expo prebuild --platform android --non-interactive
+
+      - name: 7. Build release APK
         working-directory: android
-        run: chmod +x gradlew && ./gradlew assembleRelease
-      - name: Upload APK
+        run: |
+          set -euxo pipefail
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: 8. Upload installable APK
         uses: actions/upload-artifact@v4
         with:
           name: dakhlo-kharj-android-apk
