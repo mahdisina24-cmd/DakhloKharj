@@ -1,1 +1,27 @@
-{"expo":{"name":"دخل‌وخرج","slug":"dakhlo-kharj-mobile","version":"1.0.0","orientation":"portrait","userInterfaceStyle":"light","newArchEnabled":true,"android":{"package":"com.mahdisina24.dakhlokharj","permissions":[]},"plugins":[["expo-sqlite",{"enableFTS":false}]]}}
+{
+  "expo": {
+    "name": "دخل‌وخرج",
+    "slug": "dakhlo-kharj-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.mahdisina24.dakhlokharj",
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0f766e"
+      }
+    },
+    "plugins": [
+      [
+        "expo-sqlite",
+        {
+          "enableFTS": false
+        }
+      ]
+    ],
+    "icon": "./assets/icon.png"
+  }
+}
