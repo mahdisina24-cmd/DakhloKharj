@@ -23,6 +23,10 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Align Expo package versions
+        run: npx expo install --fix
+      - name: Verify Expo dependency tree
+        run: npx expo-doctor
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
       - name: Set up Java
