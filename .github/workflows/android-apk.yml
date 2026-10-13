@@ -59,7 +59,7 @@ jobs:
               rows.append(bytes(row))
           def chunk(t, d):
               return struct.pack('!I', len(d)) + t + d + struct.pack('!I', zlib.crc32(t+d) & 0xffffffff)
-          png = b'\\x89PNG\\r\\n\\x1a\\n' + chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b'')
+          png = bytes([137,80,78,71,13,10,26,10]) + chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b'')
           open('assets/icon.png', 'wb').write(png)
           PY
       - name: Generate native Android project
