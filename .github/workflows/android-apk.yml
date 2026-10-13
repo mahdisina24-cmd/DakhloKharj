@@ -12,6 +12,10 @@ on:
       - 'tsconfig.json'
       - '.github/workflows/android-apk.yml'
 
+concurrency:
+  group: dakhlo-kharj-android-apk
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
