@@ -36,9 +36,32 @@ jobs:
         run: npx expo-doctor
       - name: Generate PNG app icon from SVG
         run: |
-          sudo apt-get update
-          sudo apt-get install -y librsvg2-bin
-          rsvg-convert -w 1024 -h 1024 assets/icon.svg > assets/icon.png
+          python - <<'PY'
+          import struct, zlib
+          # Generate a simple, valid 1024x1024 RGB PNG icon without external image tools.
+          w = h = 1024
+          rows = []
+          for y in range(h):
+              row = bytearray([0])
+              for x in range(w):
+                  # teal background with a simple white wallet/card motif
+                  edge = min(x, y, w-1-x, h-1-y)
+                  if 220 < x < 805 and 300 < y < 720:
+                      if 520 < x < 845 and 445 < y < 610:
+                          c = (15, 118, 110)
+                      else:
+                          c = (240, 253, 250)
+                  elif 90 < x < 290 and 620 < y < 820 and (x-190)**2 + (y-720)**2 < 100**2:
+                      c = (245, 158, 11)
+                  else:
+                      c = (15, 118, 110) if edge > 20 else (6, 78, 74)
+                  row.extend(c)
+              rows.append(bytes(row))
+          def chunk(t, d):
+              return struct.pack('!I', len(d)) + t + d + struct.pack('!I', zlib.crc32(t+d) & 0xffffffff)
+          png = b'\\x89PNG\\r\\n\\x1a\\n' + chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0)) + chunk(b'IDAT', zlib.compress(b''.join(rows), 6)) + chunk(b'IEND', b'')
+          open('assets/icon.png', 'wb').write(png)
+          PY
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
       - name: Set up Java
