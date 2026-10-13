@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f766e"/><stop offset="1" stop-color="#064e4a"/></linearGradient><linearGradient id="wallet" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dffaf5"/></linearGradient><linearGradient id="coin" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient></defs>
+<rect width="1024" height="1024" rx="210" fill="url(#bg)"/>
+<circle cx="515" cy="495" r="340" fill="#ffffff" opacity=".06"/>
+<g transform="rotate(-7 520 500)">
+<rect x="220" y="305" width="590" height="410" rx="65" fill="#082f49" opacity=".45"/>
+<rect x="220" y="275" width="590" height="410" rx="65" fill="url(#wallet)"/>
+<path d="M250 350 Q250 315 290 315 H760 Q800 315 800 355 V420 H250Z" fill="#14b8a6"/>
+<rect x="520" y="445" width="320" height="160" rx="44" fill="#0f766e"/>
+<circle cx="710" cy="525" r="25" fill="#e6fffb"/>
+<rect x="320" y="365" width="140" height="96" rx="20" fill="#fbbf24"/>
+<path d="M390 365 V461 M320 413 H460" stroke="#d97706" stroke-width="9" opacity=".8"/>
+</g>
+<g transform="translate(160 600)"><circle cx="125" cy="125" r="128" fill="#b45309" opacity=".55"/><circle cx="125" cy="115" r="122" fill="url(#coin)" stroke="#fef3c7" stroke-width="10"/><circle cx="125" cy="115" r="88" fill="#d97706" opacity=".4"/><path d="M70 95 Q125 55 180 95 Q125 135 70 95Z" fill="#fff7cc"/><path d="M78 119 Q125 155 172 119 V143 Q125 179 78 143Z" fill="#fff7cc"/><path d="M88 154 Q125 180 162 154 V172 Q125 199 88 172Z" fill="#fff7cc"/></g>
+<g transform="translate(765 410)"><path d="M65 0 L135 80 H98 V205 H32 V80 H0Z" fill="#86efac"/><path d="M66 375 L0 295 H34 V190 H99 V295 H132Z" fill="#fb7185"/></g>
+</svg>
