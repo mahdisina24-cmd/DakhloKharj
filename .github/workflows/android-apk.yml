@@ -6,6 +6,7 @@ on:
     paths:
       - 'App.tsx'
       - 'app.json'
+      - 'assets/icon.svg'
       - 'package.json'
       - 'tsconfig.json'
       - '.github/workflows/android-apk.yml'
@@ -33,6 +34,11 @@ jobs:
           exit 1
       - name: Verify Expo dependency tree
         run: npx expo-doctor
+      - name: Generate PNG app icon from SVG
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 1024 -h 1024 assets/icon.svg > assets/icon.png
       - name: Generate native Android project
         run: npx expo prebuild --platform android --non-interactive
       - name: Set up Java
