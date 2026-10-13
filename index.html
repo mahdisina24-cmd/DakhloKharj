@@ -36,6 +36,11 @@
           <div class="field"><label for="date">تاریخ</label><input id="date" name="date" type="date" required></div>
           <button class="primary" type="submit">ثبت تراکنش</button>
         </form>
+        <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+        <h2>مدیریت دسته‌بندی‌ها</h2>
+        <div class="field"><label for="newCategory">افزودن دسته‌بندی جدید</label><div style="display:flex;gap:8px"><input id="newCategory" maxlength="30" placeholder="نام دسته‌بندی" style="flex:1;min-width:0;border:1px solid #d8e3df;border-radius:11px;padding:10px"><button class="secondary" id="addCategory" type="button">افزودن</button></div></div>
+        <div id="categoryManager" style="display:flex;flex-direction:column;gap:7px"></div>
+        <p class="hint">می‌توانی دسته‌بندی‌ها را اضافه، ویرایش یا حذف کنی. حذف دسته‌بندی، تراکنش‌های قبلی را پاک نمی‌کند.</p>
         <p class="hint">اطلاعات روی همین دستگاه ذخیره می‌شود و به سرور ارسال نمی‌شود.</p>
       </section>
       <section class="panel">
@@ -59,12 +64,19 @@
   const fmt=n=>new Intl.NumberFormat('fa-IR',{maximumFractionDigits:0}).format(n)+' تومان';
   const dateFmt=s=>{try{return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'long',day:'numeric'}).format(new Date(s+'T12:00:00'))}catch{return s}};
   const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  const DEFAULT_CATEGORIES=['خوراک و خرید','حمل‌ونقل','قبض و خانه','سلامت','تفریح','حقوق','فروش','هدیه','پس‌انداز','سایر'];
+  const CAT_KEY='dakhlo-kharj-categories-v1';
+  let categories=DEFAULT_CATEGORIES.slice();
+  try{const savedCats=JSON.parse(localStorage.getItem(CAT_KEY)||'null');if(Array.isArray(savedCats))categories=[...new Set(savedCats.filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim()))]}catch{}
   let type='expense', items=[];
   try{const saved=JSON.parse(localStorage.getItem(KEY)||'[]');if(Array.isArray(saved))items=saved.filter(x=>x&&typeof x.title==='string'&&Number.isFinite(Number(x.amount)))}catch{items=[]}
   $('today').textContent=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());
   $('date').value=todayISO();
   const toast=msg=>{const el=$('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2300)};
   function save(){try{localStorage.setItem(KEY,JSON.stringify(items));return true}catch{toast('ذخیره‌سازی انجام نشد؛ فضای مرورگر را بررسی کنید.');return false}}
+  function saveCategories(){try{localStorage.setItem(CAT_KEY,JSON.stringify(categories));return true}catch{toast('ذخیره دسته‌بندی‌ها انجام نشد.');return false}}
+  function refreshCategorySelect(selected){const old=selected||$('category').value;const available=categories.filter(x=>type==='income'?['حقوق','فروش','هدیه','پس‌انداز','سایر'].includes(x):!['حقوق','فروش'].includes(x));const list=available.length?available:categories;$('category').innerHTML=list.map(x=>'<option>'+escapeHTML(x)+'</option>').join('');if(list.includes(old))$('category').value=old}
+  function renderCategories(){const el=$('categoryManager');if(!categories.length){el.innerHTML='<div class="hint">هنوز دسته‌بندی‌ای وجود ندارد؛ یک مورد اضافه کن.</div>';refreshCategorySelect();return}el.innerHTML=categories.map((x,i)=>'<div style="display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:7px 9px"><span style="flex:1;overflow-wrap:anywhere">'+escapeHTML(x)+'</span><button class="secondary" type="button" data-edit-category="'+i+'">ویرایش</button><button class="secondary" type="button" data-remove-category="'+i+'" style="color:var(--red)">حذف</button></div>').join('');refreshCategorySelect() }
   function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function render(){
     const inc=items.filter(x=>x.type==='income').reduce((a,x)=>a+Number(x.amount),0);
@@ -77,12 +89,16 @@
     if(!shown.length){$('transactions').innerHTML='<div class="empty"><span class="emoji">🧾</span>'+(items.length?'تراکنشی با این فیلتر پیدا نشد.':'هنوز تراکنشی ثبت نشده است.<br>اولین درآمد یا هزینه را ثبت کنید.')+'</div>';return}
     $('transactions').innerHTML=shown.map(x=>'<article class="tx"><div class="tx-icon">'+(x.type==='income'?'↙':'↗')+'</div><div class="tx-main"><div class="tx-title">'+escapeHTML(x.title)+'</div><div class="tx-meta">'+escapeHTML(x.category)+' · '+escapeHTML(dateFmt(x.date))+'</div></div><div class="tx-side"><div class="tx-amount '+(x.type==='income'?'income':'expense')+'">'+(x.type==='income'?'+':'−')+new Intl.NumberFormat('fa-IR').format(Number(x.amount))+'</div><button class="delete" data-delete="'+x.id+'" type="button" aria-label="حذف '+escapeHTML(x.title)+'">حذف</button></div></article>').join('');
   }
-  document.querySelectorAll('.type-btn').forEach(btn=>btn.addEventListener('click',()=>{type=btn.dataset.type;document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active',b===btn));$('category').innerHTML=(type==='income'?['حقوق','فروش','هدیه','پس‌انداز','سایر']:['خوراک و خرید','حمل‌ونقل','قبض و خانه','سلامت','تفریح','هدیه','سایر']).map(x=>'<option>'+x+'</option>').join('')}));
+  document.querySelectorAll('.type-btn').forEach(btn=>btn.addEventListener('click',()=>{type=btn.dataset.type;document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('active',b===btn));refreshCategorySelect()}));
+  $('addCategory').addEventListener('click',()=>{const name=$('newCategory').value.trim();if(!name){toast('نام دسته‌بندی را وارد کن.');return}if(categories.some(x=>x.toLocaleLowerCase()===name.toLocaleLowerCase())){toast('این دسته‌بندی از قبل وجود دارد.');return}categories.push(name);saveCategories();$('newCategory').value='';renderCategories();toast('دسته‌بندی اضافه شد.')});
+  $('newCategory').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('addCategory').click()}});
+  $('categoryManager').addEventListener('click',e=>{const edit=e.target.closest('[data-edit-category]'),del=e.target.closest('[data-remove-category]');if(edit){const i=Number(edit.dataset.editCategory);const next=prompt('نام جدید دسته‌بندی را وارد کن:',categories[i]);if(next===null)return;const name=next.trim();if(!name){toast('نام دسته‌بندی نمی‌تواند خالی باشد.');return}if(categories.some((x,j)=>j!==i&&x.toLocaleLowerCase()===name.toLocaleLowerCase())){toast('این نام از قبل وجود دارد.');return}const old=categories[i];categories[i]=name;items.forEach(x=>{if(x.category===old)x.category=name});saveCategories();save();renderCategories();render();toast('دسته‌بندی ویرایش شد.')}else if(del){const i=Number(del.dataset.removeCategory),name=categories[i];if(!confirm('دسته‌بندی «'+name+'» حذف شود؟ تراکنش‌های قبلی حفظ می‌شوند.'))return;categories.splice(i,1);saveCategories();renderCategories();render();toast('دسته‌بندی حذف شد.')}});
   $('txForm').addEventListener('submit',e=>{e.preventDefault();const title=$('title').value.trim(),amount=Number($('amount').value),date=$('date').value;if(!title||!Number.isSafeInteger(amount)||amount<=0||!date){toast('لطفاً عنوان، مبلغ معتبر و تاریخ را وارد کنید.');return}items.push({id:Date.now()+Math.floor(Math.random()*1000),title,amount,type,category:$('category').value,date});if(save()){render();$('txForm').reset();$('date').value=todayISO();toast('تراکنش با موفقیت ثبت شد.')}});
   $('transactions').addEventListener('click',e=>{const b=e.target.closest('[data-delete]');if(!b)return;const id=Number(b.dataset.delete);if(!confirm('این تراکنش حذف شود؟'))return;items=items.filter(x=>x.id!==id);save();render();toast('تراکنش حذف شد.')});
   $('search').addEventListener('input',render);$('filterType').addEventListener('change',render);
   $('clearBtn').addEventListener('click',()=>{if(!items.length){toast('فهرست خالی است.');return}if(confirm('همه تراکنش‌ها برای همیشه از این مرورگر پاک شوند؟')){items=[];save();render();toast('همه اطلاعات پاک شد.')}});
   $('exportBtn').addEventListener('click',()=>{if(!items.length){toast('تراکنشی برای خروجی وجود ندارد.');return}const rows=[['عنوان','نوع','دسته‌بندی','مبلغ (تومان)','تاریخ'],...items.map(x=>[x.title,x.type==='income'?'درآمد':'هزینه',x.category,x.amount,x.date])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));const a=document.createElement('a');a.href=url;a.download='dakhlo-kharj.csv';a.click();URL.revokeObjectURL(url);toast('فایل خروجی آماده شد.')});
+  renderCategories();
   render();
 })();
 </script>
