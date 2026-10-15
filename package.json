@@ -23,7 +23,8 @@
     "jalaali-js": "^1.2.8",
     "react-native-svg": "15.8.0",
     "expo-local-authentication": "~15.0.2",
-    "expo-secure-store": "~14.0.1"
+    "expo-secure-store": "~14.0.1",
+    "expo-notifications": "~0.29.14"
   },
   "devDependencies": {
     "@types/react": "~18.3.12",
