@@ -44,33 +44,14 @@ jobs:
           set -euxo pipefail
           npm install --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
-      - name: 5. Generate PNG app icon
+      - name: 5. Render app icon from SVG
         run: |
           set -euxo pipefail
+          python -m pip install --disable-pip-version-check cairosvg
           python - <<'PY'
-          import struct, zlib
-          w = h = 1024
-          rows = []
-          for y in range(h):
-              row = bytearray([0])
-              for x in range(w):
-                  if 220 < x < 805 and 300 < y < 720:
-                      c = (15, 118, 110) if (520 < x < 845 and 445 < y < 610) else (240, 253, 250)
-                  elif 90 < x < 290 and 620 < y < 820 and (x-190)**2 + (y-720)**2 < 100**2:
-                      c = (245, 158, 11)
-                  else:
-                      c = (15, 118, 110)
-                  row.extend(c)
-              rows.append(bytes(row))
-          def chunk(kind, data):
-              return struct.pack('!I', len(data)) + kind + data + struct.pack('!I', zlib.crc32(kind + data) & 0xffffffff)
-          png = bytes([137, 80, 78, 71, 13, 10, 26, 10])
-          png += chunk(b'IHDR', struct.pack('!2I5B', w, h, 8, 2, 0, 0, 0))
-          png += chunk(b'IDAT', zlib.compress(b''.join(rows), 6))
-          png += chunk(b'IEND', b'')
-          with open('assets/icon.png', 'wb') as f:
-              f.write(png)
-          print('Created assets/icon.png')
+          import cairosvg
+          cairosvg.svg2png(url='assets/icon.svg', write_to='assets/icon.png', output_width=1024, output_height=1024)
+          print('Rendered assets/icon.png from assets/icon.svg')
           PY
           file assets/icon.png
 
